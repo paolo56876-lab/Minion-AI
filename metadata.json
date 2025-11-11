@@ -1,0 +1,7 @@
+{
+  "name": "MINION AI",
+  "description": "A futuristic AI assistant powered by Gemini. It offers low-latency chat, web and maps grounding, image and video generation, video analysis, and a powerful 'thinking mode' for complex queries.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

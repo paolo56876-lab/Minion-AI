@@ -5,6 +5,8 @@ import { Message } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 import { SendIcon, UserIcon, BotIcon, TrashIcon, PaperclipIcon, CloseIcon } from './IconComponents';
 
+const LOCAL_STORAGE_KEY = 'minion-ai-chat-history';
+
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -16,14 +18,37 @@ const Chat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Load messages from localStorage on initial render
   useEffect(() => {
-    // Welcome message
-    setMessages([{
-      id: 'welcome',
-      sender: 'model',
-      text: 'Hello! I am Minion AI. How can I help you today?'
-    }]);
+    try {
+      const savedMessages = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+        } else {
+          setMessages([{ id: 'welcome', sender: 'model', text: 'Hello! I am Minion AI. How can I help you today?' }]);
+        }
+      } else {
+        setMessages([{ id: 'welcome', sender: 'model', text: 'Hello! I am Minion AI. How can I help you today?' }]);
+      }
+    } catch (error) {
+      console.error("Failed to load messages from localStorage", error);
+      setMessages([{ id: 'welcome', sender: 'model', text: 'Hello! I am Minion AI. How can I help you today?' }]);
+    }
   }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
+      } catch (error) {
+        console.error("Failed to save messages to localStorage", error);
+      }
+    }
+  }, [messages]);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -90,6 +115,7 @@ const Chat: React.FC = () => {
       sender: 'model',
       text: 'Conversation reset. How can I assist you now?'
     }]);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
     setError(null);
     setInput('');
     setImagePreview(null);

@@ -1,14 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Feature } from '../types';
-import { ChatIcon, ImageIcon, VideoScanIcon } from './IconComponents';
+import { ChatIcon, ImageIcon, VideoScanIcon, DownloadIcon } from './IconComponents';
 
 interface HeaderProps {
   activeFeature: Feature;
   setActiveFeature: (feature: Feature) => void;
 }
 
+// Define the type for the beforeinstallprompt event
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 const Header: React.FC<HeaderProps> = ({ activeFeature, setActiveFeature }) => {
-  // FIX: Changed JSX.Element to React.ReactNode to resolve namespace error.
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      // FIX: Corrected typo from BeforeInstallaprogressEvent to BeforeInstallPromptEvent.
+      setInstallPromptEvent(e as BeforeInstallPromptEvent);
+    };
+  
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (!installPromptEvent) {
+      return;
+    }
+    installPromptEvent.prompt();
+    installPromptEvent.userChoice.then(() => {
+      setInstallPromptEvent(null);
+    });
+  };
+
   const navItems: { id: Feature; label: string; icon: React.ReactNode }[] = [
     { id: 'chat', label: 'Chat', icon: <ChatIcon /> },
     { id: 'image', label: 'Generate Image', icon: <ImageIcon /> },
@@ -35,6 +70,16 @@ const Header: React.FC<HeaderProps> = ({ activeFeature, setActiveFeature }) => {
             <span className="hidden md:inline">{item.label}</span>
           </button>
         ))}
+        {installPromptEvent && (
+          <button
+            onClick={handleInstallClick}
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-300 hover:bg-gray-700 hover:text-white"
+            title="Install App"
+          >
+            <DownloadIcon />
+            <span className="hidden md:inline">Install App</span>
+          </button>
+        )}
       </nav>
     </header>
   );

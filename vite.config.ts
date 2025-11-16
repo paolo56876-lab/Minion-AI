@@ -16,7 +16,8 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          // FIX: Replaced __dirname with '.' to resolve from the current working directory, which is the project root when running Vite. This fixes the 'Cannot find name __dirname' error.
+          '@': path.resolve('.'),
         }
       }
     };
